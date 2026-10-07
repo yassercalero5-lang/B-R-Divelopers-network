@@ -1,0 +1,347 @@
+<header class="topbar">
+  <a class="brand" href="#inicio" aria-label="b&r developers network, inicio">
+    <span class="brand-mark">b<span>&amp;</span>r</span>
+    <span class="brand-divider"></span>
+    <span class="brand-name">developers<br />network</span>
+  </a>
+  <nav class="main-nav" aria-label="Navegación principal">
+    <a href="#propiedades">Explorar propiedades</a>
+    <a href="#como-funciona">Cómo funciona</a>
+  </nav>
+  <div class="top-actions">
+    @if (currentUser(); as user) {
+      <button class="profile-button" type="button" (click)="openProfile()">
+        @if (user.avatar) {
+          <img [src]="user.avatar" alt="" />
+        } @else {
+          <span class="avatar-fallback" aria-hidden="true">{{ user.name.charAt(0).toUpperCase() }}</span>
+        }
+        <span>{{ user.name }}</span>
+      </button>
+      <button class="login-button" type="button" (click)="logout()">Salir</button>
+    } @else {
+      <button class="login-button" type="button" (click)="openAccount('login')">Iniciar sesiÃ³n</button>
+    }
+    <button class="publish-button" type="button" (click)="openPublish()">
+      Publicar propiedad <span aria-hidden="true">â†—</span>
+    </button>
+  </div></header>
+
+<main id="inicio">
+  <section class="hero" aria-labelledby="hero-title">
+    <img
+      class="hero-image"
+      ngSrc="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=2200&q=85"
+      width="2200"
+      height="1200"
+      priority
+      alt="Casa contemporánea rodeada de vegetación"
+    />
+    <div class="hero-shade"></div>
+    <div class="hero-content">
+      <span class="eyebrow"
+        ><span class="eyebrow-dot"></span> TU PRÓXIMO CAPÍTULO EMPIEZA AQUÍ</span
+      >
+      <h1 id="hero-title">Un lugar para<br />sentir <em>que llegaste.</em></h1>
+      <p>Encuentra ese espacio que se parece a la vida que quieres vivir.</p>
+      <a class="hero-link" href="#propiedades"
+        >Explorar propiedades <span aria-hidden="true">↓</span></a
+      >
+    </div>
+    <div class="hero-note">
+      <span>01 — 06</span><span class="note-line"></span><span>HOGARES CON HISTORIA</span>
+    </div>
+  </section>
+
+  <section class="search-section" aria-label="Buscar propiedades">
+    <div class="search-intro">
+      <span class="section-kicker">ENCUENTRA TU LUGAR</span>
+      <h2>¿Qué estás buscando?</h2>
+    </div>
+    <form class="search-panel" (submit)="$event.preventDefault(); applySearch()">
+      <label class="search-field location-field">
+        <span class="field-icon" aria-hidden="true">⌖</span
+        ><span class="field-copy"
+          ><span>Ubicación</span
+          ><input
+            type="search"
+            placeholder="Managua, Granada, León, Rivas..."
+            [value]="query()"
+            (input)="query.set($any($event.target).value)"
+        /></span>
+      </label>
+      <label class="search-field">
+        <span class="field-copy"
+          ><span>Tipo de propiedad</span
+          ><select [value]="selectedType()" (change)="selectedType.set($any($event.target).value)">
+            <option value="Todas">Todas</option>
+            <option value="Casa">Casa</option>
+            <option value="Apartamento">Apartamento</option>
+            <option value="Terreno">Terreno</option>
+          </select></span
+        >
+      </label>
+      <label class="search-field">
+        <span class="field-copy"
+          ><span>Precio máximo</span
+          ><select [value]="maxPrice()" (change)="maxPrice.set(+$any($event.target).value)">
+            <option [value]="0">Sin límite</option>
+            <option [value]="250000">$250,000</option>
+            <option [value]="400000">$400,000</option>
+            <option [value]="600000">$600,000</option>
+          </select></span
+        >
+      </label>
+      <button class="search-button" type="submit">
+        <span aria-hidden="true">⌕</span> Buscar propiedades
+      </button>
+    </form>
+    <div class="quick-filters" aria-label="Categorías rápidas">
+      <span>Explora por:</span>
+      <button
+        type="button"
+        [class.active]="selectedType() === 'Todas'"
+        (click)="selectedType.set('Todas')"
+      >
+        Todas
+      </button>
+      <button
+        type="button"
+        [class.active]="selectedType() === 'Casa'"
+        (click)="selectedType.set('Casa')"
+      >
+        Casas
+      </button>
+      <button
+        type="button"
+        [class.active]="selectedType() === 'Apartamento'"
+        (click)="selectedType.set('Apartamento')"
+      >
+        Apartamentos
+      </button>
+      <button
+        type="button"
+        [class.active]="selectedType() === 'Terreno'"
+        (click)="selectedType.set('Terreno')"
+      >
+        Terrenos
+      </button>
+    </div>
+  </section>
+
+  <section class="listings-section" id="propiedades" aria-labelledby="listings-title">
+    <div class="section-heading">
+      <div>
+        <span class="section-kicker">SELECCIÓN PARA TI</span>
+        <h2 id="listings-title">Lugares que inspiran.</h2>
+        <p>Propiedades para cada forma de vivir.</p>
+      </div>
+      <div class="listing-actions">
+        @if (currentUser() && ownedProperties().length) {
+          <button class="view-all" type="button" (click)="showMyProperties()">
+            Mis publicaciones ({{ ownedProperties().length }})
+          </button>
+        }
+        <button class="view-all" type="button" (click)="resetFilters()">
+          Ver todas <span aria-hidden="true">→</span>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <section class="contact-strip">
+    <div>
+      <span class="section-kicker">¿TIENES UNA PROPIEDAD?</span>
+      <h2>Tu próximo comprador<br />podría estar aquí.</h2>
+    </div>
+    <button type="button" (click)="openPublish()">
+      Conoce cómo publicar <span aria-hidden="true">↗</span>
+    </button>
+  </section>
+</main>
+
+<footer class="footer">
+  <a class="brand footer-brand" href="#inicio"
+    ><span class="brand-mark">b<span>&amp;</span>r</span><span class="brand-divider"></span
+    ><span class="brand-name">developers<br />network</span></a
+  ><span>Encuentra tu lugar. © 2026 b&amp;r|developers network</span
+  ><a href="#inicio">Volver arriba ↑</a>
+</footer>
+
+@if (selectedProperty(); as property) {
+  <div class="dialog-backdrop" (click)="closeDetails()" (keydown.escape)="closeDetails()">
+    <section
+      class="property-dialog"
+      role="dialog"
+      aria-modal="true"
+      [attr.aria-label]="'Detalles de ' + property.title"
+      (click)="$event.stopPropagation()"
+    >
+      <button
+        class="dialog-close"
+        type="button"
+        aria-label="Cerrar detalles"
+        (click)="closeDetails()"
+      >
+        ×
+      </button>
+      @if (isLocalImage(property.image)) {
+        <img [src]="property.image" width="1000" height="700" [alt]="property.imageAlt" />
+      } @else {
+        <img [ngSrc]="property.image" width="1000" height="700" [alt]="property.imageAlt" />
+      }
+      @if (property.photos; as photos) {
+        @if (photos.length > 1) {
+          <div class="detail-gallery" aria-label="Fotos de la propiedad">
+            @for (photo of photos.slice(1); track photo) {
+              <img [src]="photo" alt="Otra vista de la propiedad" />
+            }
+          </div>
+        }
+      }
+      <div class="dialog-content">
+        <span class="section-kicker">{{ property.type }} · {{ property.location }}</span>
+        <h2>{{ property.title }}</h2>
+        <strong>{{ property.priceLabel }}</strong>
+        <p>{{ property.description }}</p>
+        <div class="property-specs">
+          <span>{{ property.bedrooms }} habitaciones</span><i></i
+          ><span>{{ property.bathrooms }} baños</span><i></i><span>{{ property.area }} m²</span>
+        </div>
+        <a class="contact-button" [href]="contactLink(property)"
+          >Consultar esta propiedad <span aria-hidden="true">↗</span></a
+        >
+      </div>
+    </section>
+  </div>
+}
+
+@if (accountDialog(); as mode) {
+  <div
+    class="dialog-backdrop"
+    (click)="closeAccount()"
+    (keydown.escape)="closeAccount()"
+  >
+    <section
+      class="form-dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="account-title"
+      (click)="$event.stopPropagation()"
+    >
+      <button
+        class="dialog-close"
+        type="button"
+        aria-label="Cerrar"
+        (click)="closeAccount()"
+      >
+        ×
+      </button>
+      <span class="section-kicker">B&amp;R NICARAGUA</span>
+      <h2 id="account-title">{{ mode === 'register' ? 'Crear cuenta' : 'Iniciar sesión' }}</h2>
+      <p>Guarda tus propiedades favoritas y conecta con vendedores en Nicaragua.</p>
+      <form class="entry-form" (submit)="submitAccount($event)">
+        @if (mode === 'register') {
+          <label>Nombre completo<input name="name" autocomplete="name" required /></label>
+        }
+        <label
+          >Correo electrónico<input name="email" type="email" autocomplete="email" required
+        /></label>
+        <label
+          >Contraseña<input
+            name="password"
+            type="password"
+            [attr.autocomplete]="mode === 'register' ? 'new-password' : 'current-password'"
+            minlength="6"
+            required
+        /></label>
+        @if (mode === 'register') {
+          <label>Confirmar contraseña<input name="confirmPassword" type="password" autocomplete="new-password" minlength="6" required /></label>
+        }
+        @if (accountError()) {
+          <p class="form-error" role="alert">{{ accountError() }}</p>
+        }
+        <button class="contact-button" type="submit">
+          {{ mode === 'register' ? 'Crear cuenta' : 'Entrar' }}
+        </button>
+      </form>
+      <button
+        class="text-action"
+        type="button"
+        (click)="switchAccountMode(mode === 'register' ? 'login' : 'register')"
+      >
+        {{ mode === 'register' ? 'Ya tengo una cuenta' : 'Crear una cuenta' }}
+      </button>
+      <small>Demo local: la cuenta solo queda guardada en este navegador.</small>
+    </section>
+  </div>
+}
+
+@if (profileDialog() && currentUser(); as user) {
+  <div class="dialog-backdrop" (click)="profileDialog.set(false)" (keydown.escape)="profileDialog.set(false)">
+    <section class="form-dialog" role="dialog" aria-modal="true" aria-labelledby="profile-title" (click)="$event.stopPropagation()">
+      <button class="dialog-close" type="button" aria-label="Cerrar" (click)="profileDialog.set(false)">×</button>
+      <span class="section-kicker">TU CUENTA</span>
+      <h2 id="profile-title">Editar perfil</h2>
+      <form class="entry-form" (submit)="submitProfile($event)">
+        <label>Nombre<input name="name" autocomplete="name" [value]="user.name" required /></label>
+        <label>Correo<input type="email" [value]="user.email" disabled /></label>
+        <label>Foto de perfil<input type="file" accept="image/*" (change)="onPhotoSelected($event, 'profile')" /></label>
+        @if (profilePhoto()) {
+          <img class="profile-preview" [src]="profilePhoto()" alt="Vista previa de tu foto de perfil" />
+        }
+        @if (profileError()) {
+          <p class="form-error" role="alert">{{ profileError() }}</p>
+        }
+        <button class="contact-button" type="submit">Guardar perfil</button>
+      </form>
+      <small>Tu perfil y foto se guardan en este navegador.</small>
+    </section>
+  </div>
+}
+
+@if (publishDialog()) {
+  <div class="dialog-backdrop" (click)="closePublish()" (keydown.escape)="closePublish()">
+    <section class="form-dialog" role="dialog" aria-modal="true" aria-labelledby="publish-title" (click)="$event.stopPropagation()">
+      <button class="dialog-close" type="button" aria-label="Cerrar" (click)="closePublish()">×</button>
+      <span class="section-kicker">PUBLICA EN NICARAGUA</span>
+      <h2 id="publish-title">{{ editingProperty() ? 'Editar publicación' : 'Publica tu propiedad' }}</h2>
+      <p>Comparte los datos principales para mostrar tu propiedad en esta página.</p>
+      <form class="entry-form publish-form" (submit)="submitProperty($event)">
+        <label>Nombre de la propiedad<input name="title" [value]="editingProperty()?.title ?? ''" required /></label>
+        <label>Ciudad o zona<input name="location" placeholder="Managua, Granada, León, Rivas..." [value]="editingProperty()?.location ?? ''" required /></label>
+        <label>Tipo<select name="type" [value]="editingProperty()?.type ?? 'Casa'"><option>Casa</option><option>Apartamento</option><option>Terreno</option></select></label>
+        <label>Precio en USD<input name="price" type="number" min="1" [value]="editingProperty()?.price ?? ''" required /></label>
+        <label>Habitaciones<input name="bedrooms" type="number" min="0" [value]="editingProperty()?.bedrooms ?? 0" /></label>
+        <label>Baños<input name="bathrooms" type="number" min="0" [value]="editingProperty()?.bathrooms ?? 0" /></label>
+        <label>Área en m²<input name="area" type="number" min="0" [value]="editingProperty()?.area ?? 0" /></label>
+        <label>Fotos de la propiedad (hasta 5)<input type="file" accept="image/*" multiple (change)="onPhotoSelected($event, 'property')" /></label>
+        @if (propertyPhotos().length) {
+          <div class="property-previews full-field" aria-label="Vista previa de las fotos">
+            @for (photo of propertyPhotos(); track photo) {
+              <img [src]="photo" alt="Vista previa de la propiedad" />
+            }
+          </div>
+        } @else if (editingProperty()?.image) {
+          <img class="property-preview full-field" [src]="editingProperty()?.image" alt="Foto actual de la propiedad" />
+        }
+        <label class="full-field">Descripción<textarea name="description" rows="3" [value]="editingProperty()?.description ?? ''"></textarea></label>
+        <button class="contact-button full-field" type="submit">{{ editingProperty() ? 'Guardar cambios' : 'Publicar propiedad' }}</button>
+      </form>
+      <small>Las publicaciones y las fotos se guardan en este navegador.</small>
+    </section>
+  </div>
+}
+
+@if (deletePropertyId() !== null) {
+  <div class="dialog-backdrop" (click)="cancelDeleteProperty()" (keydown.escape)="cancelDeleteProperty()">
+    <section class="form-dialog confirm-dialog" role="alertdialog" aria-modal="true" aria-labelledby="delete-title" (click)="$event.stopPropagation()">
+      <h2 id="delete-title">¿Eliminar publicación?</h2>
+      <p>Esta acción quitará tu publicación y no se puede deshacer.</p>
+      <div class="confirm-actions">
+        <button type="button" class="secondary-button" (click)="cancelDeleteProperty()">Cancelar</button>
+        <button type="button" class="danger-button" (click)="confirmDeleteProperty()">Eliminar</button>
+      </div>
+    </section>
+  </div>
+}
