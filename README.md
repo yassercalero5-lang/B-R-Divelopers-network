@@ -57,3 +57,11 @@ Angular CLI does not come with an end-to-end testing framework by default. You c
 ## Additional Resources
 
 For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+
+## Publicar en GitHub Pages
+
+El flujo `.github/workflows/deploy-pages.yml` publica el proyecto en cada cambio enviado a `main`.
+
+En la configuración del repositorio, abre **Pages** y selecciona **GitHub Actions** como origen de publicación. La dirección del sitio será:
+
+https://yassercalero5-lang.github.io/B-R-Divelopers-network/
