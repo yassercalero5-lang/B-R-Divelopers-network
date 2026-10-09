@@ -20,10 +20,10 @@
       </button>
       <button class="login-button" type="button" (click)="logout()">Salir</button>
     } @else {
-      <button class="login-button" type="button" (click)="openAccount('login')">Iniciar sesiÃ³n</button>
+      <button class="login-button" type="button" (click)="openAccount('login')">Iniciar sesión</button>
     }
     <button class="publish-button" type="button" (click)="openPublish()">
-      Publicar propiedad <span aria-hidden="true">â†—</span>
+      Publicar propiedad <span aria-hidden="true">ahora</span>
     </button>
   </div></header>
 
@@ -147,6 +147,47 @@
         </button>
       </div>
     </div>
+    <div class="property-grid">
+      @for (property of filteredProperties(); track property.id) {
+        <article class="property-card">
+          <button class="photo-button" type="button" (click)="openDetails(property)" [attr.aria-label]="'Ver detalles de ' + property.title">
+            @if (isLocalImage(property.image)) {
+              <img [src]="property.image" width="1000" height="735" [alt]="property.imageAlt" />
+            } @else {
+              <img [ngSrc]="property.image" width="1000" height="735" [alt]="property.imageAlt" />
+            }
+            <span class="property-status">{{ property.status }}</span>
+          </button>
+          <button class="favorite-button" type="button" [attr.aria-pressed]="favorites().includes(property.id)" [attr.aria-label]="favorites().includes(property.id) ? 'Quitar de favoritos' : 'Añadir a favoritos'" (click)="toggleFavorite(property.id)">{{ favorites().includes(property.id) ? '♥' : '♡' }}</button>
+          <div class="property-info">
+            <span class="property-location"><span aria-hidden="true">⌖</span>{{ property.location }}</span>
+            <button class="property-title" type="button" (click)="openDetails(property)">{{ property.title }}</button>
+            <div class="property-specs">
+              @if (property.bedrooms) { <span>{{ property.bedrooms }} habitaciones</span><i></i> }
+              @if (property.bathrooms) { <span>{{ property.bathrooms }} baños</span><i></i> }
+              <span>{{ property.area }} m²</span>
+            </div>
+            <div class="property-bottom"><strong>{{ property.priceLabel }}</strong><span>{{ property.type }}</span></div>
+            @if (property.ownerEmail === currentUser()?.email) {
+              <div class="owner-actions">
+                <button type="button" (click)="openEditProperty(property)">Editar</button>
+                <button type="button" (click)="requestDeleteProperty(property)">Eliminar</button>
+              </div>
+            }
+          </div>
+        </article>
+      } @empty {
+        <div class="empty-state">
+          <span aria-hidden="true">⌕</span>
+          <h3>No encontramos propiedades</h3>
+          <p>Prueba con otros filtros o consulta todas las publicaciones.</p>
+          <button class="secondary-button" type="button" (click)="resetFilters()">Ver todas las propiedades</button>
+        </div>
+      }
+    </div>
+    @if (filteredProperties().length) {
+      <p class="results-footer">Mostrando <strong>{{ filteredProperties().length }}</strong> propiedades disponibles</p>
+    }
   </section>
 
   <section class="contact-strip">
