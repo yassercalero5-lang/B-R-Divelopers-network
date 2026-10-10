@@ -26,6 +26,9 @@ interface LocalAccount {
   avatar?: string;
 }
 
+const PROPERTY_PHOTO_MAX_DIMENSION = 1400;
+const PROFILE_PHOTO_MAX_DIMENSION = 480;
+
 @Component({
   imports: [NgOptimizedImage],
   selector: 'app-root',
@@ -513,7 +516,9 @@ export class App {
     try {
       const images = await Promise.all(chosenFiles.map(async (file) => {
         const bitmap = await createImageBitmap(file);
-        const maxDimension = target === 'profile' ? 480 : 1400;
+        const maxDimension = target === 'profile'
+          ? PROFILE_PHOTO_MAX_DIMENSION
+          : PROPERTY_PHOTO_MAX_DIMENSION;
         const scale = Math.min(1, maxDimension / Math.max(bitmap.width, bitmap.height));
         const canvas = document.createElement('canvas');
         canvas.width = Math.round(bitmap.width * scale);

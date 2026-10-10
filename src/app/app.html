@@ -377,7 +377,7 @@
         <label>Habitaciones<input name="bedrooms" type="number" min="0" [value]="editingProperty()?.bedrooms ?? 0" /></label>
         <label>Baños<input name="bathrooms" type="number" min="0" [value]="editingProperty()?.bathrooms ?? 0" /></label>
         <label>Área en m²<input name="area" type="number" min="0" [value]="editingProperty()?.area ?? 0" /></label>
-        <label>Fotos de la propiedad (hasta 8, puedes agregarlas en varias selecciones)<input type="file" accept="image/*" multiple (change)="onPhotoSelected($event, 'property')" /></label>
+        <label>Fotos (hasta 8; puedes agregarlas en varias selecciones; máximo 8 MB cada una; ajuste automático hasta 1400 × 1400 px, proporción conservada)<input type="file" accept="image/*" multiple (change)="onPhotoSelected($event, 'property')" /></label>
         @if (propertyPhotos().length) {
           <div class="property-previews full-field" aria-label="Vista previa de las fotos">
             @for (photo of propertyPhotos(); track photo) {
