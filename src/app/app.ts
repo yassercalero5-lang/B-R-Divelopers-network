@@ -380,8 +380,9 @@ export class App {
   protected openEditProperty(property: Property): void {
     if (!this.canManageProperty(property, 'editar')) return;
     this.editingPropertyId.set(property.id);
-    this.propertyPhoto.set('');
-    this.propertyPhotos.set([]);
+    const photos = property.photos?.length ? property.photos : [property.image];
+    this.propertyPhotos.set(photos);
+    this.propertyPhoto.set(photos[0] ?? '');
     this.publishDialog.set(true);
   }
 
@@ -474,10 +475,20 @@ export class App {
   protected async onPhotoSelected(event: Event, target: 'profile' | 'property'): Promise<void> {
     const input = event.currentTarget;
     if (!(input instanceof HTMLInputElement)) return;
-    const chosenFiles = Array.from(input.files ?? []).slice(0, target === 'property' ? 5 : 1);
+    const chosenFiles = target === 'property'
+      ? Array.from(input.files ?? [])
+      : Array.from(input.files ?? []).slice(0, 1);
     if (!chosenFiles.length) return;
+    const currentPhotos = target === 'property' ? this.propertyPhotos() : [];
+    if (target === 'property' && currentPhotos.length + chosenFiles.length > 8) {
+      this.showNotice(`Puedes agregar hasta 8 fotos por propiedad. Ya tienes ${currentPhotos.length}.`);
+      input.value = '';
+      return;
+    }
     if (chosenFiles.some((file) => !file.type.startsWith('image/') || file.size > 8 * 1024 * 1024)) {
-      const message = 'Elige hasta 5 imágenes de máximo 8 MB cada una.';
+      const message = target === 'profile'
+        ? 'Elige una imagen de máximo 8 MB.'
+        : 'Elige fotos de máximo 8 MB cada una.';
       if (target === 'profile') this.profileError.set(message);
       else this.showNotice(message);
       input.value = '';
@@ -499,8 +510,9 @@ export class App {
       }));
       if (target === 'profile') this.profilePhoto.set(images[0]);
       else {
-        this.propertyPhotos.set(images);
-        this.propertyPhoto.set(images[0]);
+        const allPhotos = [...currentPhotos, ...images];
+        this.propertyPhotos.set(allPhotos);
+        this.propertyPhoto.set(allPhotos[0]);
       }
     } catch {
       if (target === 'profile') this.profileError.set('No se pudo leer esa imagen.');
