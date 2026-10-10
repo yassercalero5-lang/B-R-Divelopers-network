@@ -378,7 +378,7 @@ export class App {
   }
 
   protected openEditProperty(property: Property): void {
-    if (property.ownerEmail !== this.currentUser()?.email) return;
+    if (!this.canManageProperty(property, 'editar')) return;
     this.editingPropertyId.set(property.id);
     this.propertyPhoto.set('');
     this.propertyPhotos.set([]);
@@ -393,14 +393,40 @@ export class App {
   }
 
   protected requestDeleteProperty(property: Property): void {
-    if (property.ownerEmail === this.currentUser()?.email) this.deletePropertyId.set(property.id);
+    if (!this.canManageProperty(property, 'eliminar')) return;
+    this.deletePropertyId.set(property.id);
+  }
+
+  private canManageProperty(property: Property, action: 'editar' | 'eliminar'): boolean {
+    const user = this.currentUser();
+    if (!user) {
+      this.showNotice(`Inicia sesión con tu cuenta para ${action} un anuncio.`);
+      this.openAccount('login');
+      return false;
+    }
+    if (property.ownerEmail !== user.email) {
+      this.showNotice('Solo puedes administrar anuncios publicados con tu cuenta.');
+      return false;
+    }
+    return true;
   }
 
   protected confirmDeleteProperty(): void {
     const id = this.deletePropertyId();
     const user = this.currentUser();
     const property = this.properties().find((item) => item.id === id);
-    if (!property || !user || property.ownerEmail !== user.email) return;
+    if (!property) return;
+    if (!user) {
+      this.deletePropertyId.set(null);
+      this.showNotice('Inicia sesión con tu cuenta para eliminar este anuncio.');
+      this.openAccount('login');
+      return;
+    }
+    if (property.ownerEmail !== user.email) {
+      this.deletePropertyId.set(null);
+      this.showNotice('Solo puedes eliminar anuncios publicados con tu cuenta.');
+      return;
+    }
     this.properties.update((items) => items.filter((item) => item.id !== id));
     this.persistProperties();
     this.deletePropertyId.set(null);

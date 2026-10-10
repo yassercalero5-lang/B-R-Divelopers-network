@@ -350,6 +350,27 @@ a {
   align-items: center;
   gap: 20px;
 }
+.account-hint {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+  margin: -12px 0 24px;
+  padding: 12px 14px;
+  border-left: 2px solid var(--green);
+  background: var(--paper);
+  color: #555750;
+  font-size: 11px;
+}
+.account-hint button {
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid #73786f;
+  background: transparent;
+  color: var(--green);
+  font-size: inherit;
+  font-weight: 600;
+}
 .view-all span {
   padding-left: 18px;
 }

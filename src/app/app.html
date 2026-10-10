@@ -27,6 +27,13 @@
     </button>
   </div></header>
 
+@if (notice()) {
+  <div class="notice" role="status">
+    <span>{{ notice() }}</span>
+    <button type="button" aria-label="Cerrar aviso" (click)="notice.set('')">×</button>
+  </div>
+}
+
 <main id="inicio">
   <section class="hero" aria-labelledby="hero-title">
     <img
@@ -146,6 +153,15 @@
           Ver todas <span aria-hidden="true">→</span>
         </button>
       </div>
+    </div>
+    <div class="account-hint">
+      @if (currentUser()) {
+        <span>Solo puedes editar o eliminar anuncios publicados con tu cuenta.</span>
+      } @else {
+        <span>Para editar o eliminar, inicia sesión con la cuenta que publicó el anuncio.</span>
+        <button type="button" (click)="openAccount('login')">Iniciar sesión</button>
+        <button type="button" (click)="openAccount('register')">Crear cuenta</button>
+      }
     </div>
     <div class="property-grid">
       @for (property of filteredProperties(); track property.id) {
