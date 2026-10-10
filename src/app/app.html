@@ -184,7 +184,7 @@
               <span>{{ property.area }} m²</span>
             </div>
             <div class="property-bottom"><strong>{{ property.priceLabel }}</strong><span>{{ property.type }}</span></div>
-            @if (property.ownerEmail === currentUser()?.email) {
+            @if (currentUser() && property.ownerEmail && property.ownerEmail === currentUser()?.email) {
               <div class="owner-actions">
                 <button type="button" (click)="openEditProperty(property)">Editar</button>
                 <button type="button" (click)="requestDeleteProperty(property)">Eliminar</button>
