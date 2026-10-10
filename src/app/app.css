@@ -657,12 +657,67 @@ a {
   overflow: auto;
   background: #fff;
 }
-.property-dialog > img {
+.detail-carousel {
+  position: relative;
+  background: #17211b;
+}
+.detail-carousel-image {
   width: 100%;
   height: 300px;
   object-fit: cover;
 }
-.detail-gallery,
+.carousel-arrow {
+  position: absolute;
+  top: 50%;
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  transform: translateY(-50%);
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  border-radius: 50%;
+  background: rgba(20, 27, 22, 0.72);
+  color: #fff;
+  font-size: 30px;
+  line-height: 1;
+  cursor: pointer;
+}
+.carousel-arrow:hover { background: #263b30; }
+.carousel-arrow:focus-visible,
+.carousel-dots button:focus-visible {
+  outline: 3px solid #d4e6a5;
+  outline-offset: 3px;
+}
+.carousel-previous { left: 14px; }
+.carousel-next { right: 14px; }
+.carousel-count {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  padding: 5px 9px;
+  border-radius: 20px;
+  background: rgba(20, 27, 22, 0.76);
+  color: #fff;
+  font-size: 12px;
+}
+.carousel-dots {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  display: flex;
+  gap: 8px;
+  transform: translateX(-50%);
+}
+.carousel-dots button {
+  width: 9px;
+  height: 9px;
+  padding: 0;
+  border: 1px solid #fff;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.55);
+  cursor: pointer;
+}
+.carousel-dots button.active { background: #fff; transform: scale(1.25); }
 .property-previews {
   display: flex;
   gap: 10px;
@@ -1044,7 +1099,7 @@ select:focus-visible {
     width: 100%;
     text-align: center;
   }
-  .property-dialog > img {
+  .detail-carousel-image {
     height: 220px;
   }
   .form-dialog {

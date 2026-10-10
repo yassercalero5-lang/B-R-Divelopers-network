@@ -242,19 +242,24 @@
       >
         ×
       </button>
-      @if (isLocalImage(property.image)) {
-        <img [src]="property.image" width="1000" height="700" [alt]="property.imageAlt" />
-      } @else {
-        <img [ngSrc]="property.image" width="1000" height="700" [alt]="property.imageAlt" />
-      }
-      @if (property.photos; as photos) {
-        @if (photos.length > 1) {
-          <div class="detail-gallery" aria-label="Fotos de la propiedad">
-            @for (photo of photos.slice(1); track photo) {
-              <img [src]="photo" alt="Otra vista de la propiedad" />
-            }
-          </div>
-        }
+      @if (detailPhotos().length) {
+        <div class="detail-carousel" aria-label="Galería de fotos de la propiedad">
+          @if (isLocalImage(detailPhotos()[detailPhotoIndex()])) {
+            <img class="detail-carousel-image" [src]="detailPhotos()[detailPhotoIndex()]" width="1000" height="700" [alt]="'Foto ' + (detailPhotoIndex() + 1) + ' de ' + detailPhotos().length + ': ' + property.imageAlt" />
+          } @else {
+            <img class="detail-carousel-image" [ngSrc]="detailPhotos()[detailPhotoIndex()]" width="1000" height="700" [alt]="'Foto ' + (detailPhotoIndex() + 1) + ' de ' + detailPhotos().length + ': ' + property.imageAlt" />
+          }
+          @if (detailPhotos().length > 1) {
+            <button class="carousel-arrow carousel-previous" type="button" aria-label="Ver foto anterior" (click)="changeDetailPhoto(-1)">‹</button>
+            <button class="carousel-arrow carousel-next" type="button" aria-label="Ver foto siguiente" (click)="changeDetailPhoto(1)">›</button>
+            <span class="carousel-count" aria-live="polite">{{ detailPhotoIndex() + 1 }} / {{ detailPhotos().length }}</span>
+            <div class="carousel-dots" aria-label="Elegir foto">
+              @for (photo of detailPhotos(); track $index) {
+                <button type="button" [class.active]="detailPhotoIndex() === $index" [attr.aria-label]="'Ver foto ' + ($index + 1)" [attr.aria-current]="detailPhotoIndex() === $index ? 'true' : null" (click)="selectDetailPhoto($index)"></button>
+              }
+            </div>
+          }
+        </div>
       }
       <div class="dialog-content">
         <span class="section-kicker">{{ property.type }} · {{ property.location }}</span>

@@ -40,6 +40,11 @@ export class App {
   protected readonly maxPrice = signal(0);
   protected readonly favorites = signal<number[]>([]);
   protected readonly selectedProperty = signal<Property | null>(null);
+  protected readonly detailPhotoIndex = signal(0);
+  protected readonly detailPhotos = computed(() => {
+    const property = this.selectedProperty();
+    return property ? (property.photos?.length ? property.photos : [property.image]) : [];
+  });
   protected readonly notice = signal('');
   protected readonly accountDialog = signal<'login' | 'register' | null>(null);
   protected readonly accountError = signal('');
@@ -227,7 +232,18 @@ export class App {
   }
 
   protected openDetails(property: Property): void {
+    this.detailPhotoIndex.set(0);
     this.selectedProperty.set(property);
+  }
+
+  protected changeDetailPhoto(direction: -1 | 1): void {
+    const count = this.detailPhotos().length;
+    if (count < 2) return;
+    this.detailPhotoIndex.update((index) => (index + direction + count) % count);
+  }
+
+  protected selectDetailPhoto(index: number): void {
+    if (index >= 0 && index < this.detailPhotos().length) this.detailPhotoIndex.set(index);
   }
 
   protected closeDetails(): void {
