@@ -682,14 +682,20 @@ a {
   line-height: 1;
   cursor: pointer;
 }
-.carousel-arrow:hover { background: #263b30; }
+.carousel-arrow:hover {
+  background: #263b30;
+}
 .carousel-arrow:focus-visible,
 .carousel-dots button:focus-visible {
   outline: 3px solid #d4e6a5;
   outline-offset: 3px;
 }
-.carousel-previous { left: 14px; }
-.carousel-next { right: 14px; }
+.carousel-previous {
+  left: 14px;
+}
+.carousel-next {
+  right: 14px;
+}
 .carousel-count {
   position: absolute;
   right: 14px;
@@ -717,7 +723,10 @@ a {
   background: rgba(255, 255, 255, 0.55);
   cursor: pointer;
 }
-.carousel-dots button.active { background: #fff; transform: scale(1.25); }
+.carousel-dots button.active {
+  background: #fff;
+  transform: scale(1.25);
+}
 .property-previews {
   display: flex;
   gap: 10px;

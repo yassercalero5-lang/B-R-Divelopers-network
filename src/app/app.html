@@ -14,18 +14,23 @@
         @if (user.avatar) {
           <img [src]="user.avatar" alt="" />
         } @else {
-          <span class="avatar-fallback" aria-hidden="true">{{ user.name.charAt(0).toUpperCase() }}</span>
+          <span class="avatar-fallback" aria-hidden="true">{{
+            user.name.charAt(0).toUpperCase()
+          }}</span>
         }
         <span>{{ user.name }}</span>
       </button>
       <button class="login-button" type="button" (click)="logout()">Salir</button>
     } @else {
-      <button class="login-button" type="button" (click)="openAccount('login')">Iniciar sesión</button>
+      <button class="login-button" type="button" (click)="openAccount('login')">
+        Iniciar sesión
+      </button>
     }
     <button class="publish-button" type="button" (click)="openPublish()">
       Publicar propiedad <span aria-hidden="true">ahora</span>
     </button>
-  </div></header>
+  </div>
+</header>
 
 @if (notice()) {
   <div class="notice" role="status">
@@ -166,7 +171,12 @@
     <div class="property-grid">
       @for (property of filteredProperties(); track property.id) {
         <article class="property-card">
-          <button class="photo-button" type="button" (click)="openDetails(property)" [attr.aria-label]="'Ver detalles de ' + property.title">
+          <button
+            class="photo-button"
+            type="button"
+            (click)="openDetails(property)"
+            [attr.aria-label]="'Ver detalles de ' + property.title"
+          >
             @if (isLocalImage(property.image)) {
               <img [src]="property.image" width="1000" height="735" [alt]="property.imageAlt" />
             } @else {
@@ -174,17 +184,40 @@
             }
             <span class="property-status">{{ property.status }}</span>
           </button>
-          <button class="favorite-button" type="button" [attr.aria-pressed]="favorites().includes(property.id)" [attr.aria-label]="favorites().includes(property.id) ? 'Quitar de favoritos' : 'Añadir a favoritos'" (click)="toggleFavorite(property.id)">{{ favorites().includes(property.id) ? '♥' : '♡' }}</button>
+          <button
+            class="favorite-button"
+            type="button"
+            [attr.aria-pressed]="favorites().includes(property.id)"
+            [attr.aria-label]="
+              favorites().includes(property.id) ? 'Quitar de favoritos' : 'Añadir a favoritos'
+            "
+            (click)="toggleFavorite(property.id)"
+          >
+            {{ favorites().includes(property.id) ? '♥' : '♡' }}
+          </button>
           <div class="property-info">
-            <span class="property-location"><span aria-hidden="true">⌖</span>{{ property.location }}</span>
-            <button class="property-title" type="button" (click)="openDetails(property)">{{ property.title }}</button>
+            <span class="property-location"
+              ><span aria-hidden="true">⌖</span>{{ property.location }}</span
+            >
+            <button class="property-title" type="button" (click)="openDetails(property)">
+              {{ property.title }}
+            </button>
             <div class="property-specs">
-              @if (property.bedrooms) { <span>{{ property.bedrooms }} habitaciones</span><i></i> }
-              @if (property.bathrooms) { <span>{{ property.bathrooms }} baños</span><i></i> }
+              @if (property.bedrooms) {
+                <span>{{ property.bedrooms }} habitaciones</span><i></i>
+              }
+              @if (property.bathrooms) {
+                <span>{{ property.bathrooms }} baños</span><i></i>
+              }
               <span>{{ property.area }} m²</span>
             </div>
-            <div class="property-bottom"><strong>{{ property.priceLabel }}</strong><span>{{ property.type }}</span></div>
-            @if (currentUser() && property.ownerEmail && property.ownerEmail === currentUser()?.email) {
+            <div class="property-bottom">
+              <strong>{{ property.priceLabel }}</strong
+              ><span>{{ property.type }}</span>
+            </div>
+            @if (
+              currentUser() && property.ownerEmail && property.ownerEmail === currentUser()?.email
+            ) {
               <div class="owner-actions">
                 <button type="button" (click)="openEditProperty(property)">Editar</button>
                 <button type="button" (click)="requestDeleteProperty(property)">Eliminar</button>
@@ -197,12 +230,16 @@
           <span aria-hidden="true">⌕</span>
           <h3>No encontramos propiedades</h3>
           <p>Prueba con otros filtros o consulta todas las publicaciones.</p>
-          <button class="secondary-button" type="button" (click)="resetFilters()">Ver todas las propiedades</button>
+          <button class="secondary-button" type="button" (click)="resetFilters()">
+            Ver todas las propiedades
+          </button>
         </div>
       }
     </div>
     @if (filteredProperties().length) {
-      <p class="results-footer">Mostrando <strong>{{ filteredProperties().length }}</strong> propiedades disponibles</p>
+      <p class="results-footer">
+        Mostrando <strong>{{ filteredProperties().length }}</strong> propiedades disponibles
+      </p>
     }
   </section>
 
@@ -245,17 +282,65 @@
       @if (detailPhotos().length) {
         <div class="detail-carousel" aria-label="Galería de fotos de la propiedad">
           @if (isLocalImage(detailPhotos()[detailPhotoIndex()])) {
-            <img class="detail-carousel-image" [src]="detailPhotos()[detailPhotoIndex()]" width="1000" height="700" [alt]="'Foto ' + (detailPhotoIndex() + 1) + ' de ' + detailPhotos().length + ': ' + property.imageAlt" />
+            <img
+              class="detail-carousel-image"
+              [src]="detailPhotos()[detailPhotoIndex()]"
+              width="1000"
+              height="700"
+              [alt]="
+                'Foto ' +
+                (detailPhotoIndex() + 1) +
+                ' de ' +
+                detailPhotos().length +
+                ': ' +
+                property.imageAlt
+              "
+            />
           } @else {
-            <img class="detail-carousel-image" [ngSrc]="detailPhotos()[detailPhotoIndex()]" width="1000" height="700" [alt]="'Foto ' + (detailPhotoIndex() + 1) + ' de ' + detailPhotos().length + ': ' + property.imageAlt" />
+            <img
+              class="detail-carousel-image"
+              [ngSrc]="detailPhotos()[detailPhotoIndex()]"
+              width="1000"
+              height="700"
+              [alt]="
+                'Foto ' +
+                (detailPhotoIndex() + 1) +
+                ' de ' +
+                detailPhotos().length +
+                ': ' +
+                property.imageAlt
+              "
+            />
           }
           @if (detailPhotos().length > 1) {
-            <button class="carousel-arrow carousel-previous" type="button" aria-label="Ver foto anterior" (click)="changeDetailPhoto(-1)">‹</button>
-            <button class="carousel-arrow carousel-next" type="button" aria-label="Ver foto siguiente" (click)="changeDetailPhoto(1)">›</button>
-            <span class="carousel-count" aria-live="polite">{{ detailPhotoIndex() + 1 }} / {{ detailPhotos().length }}</span>
+            <button
+              class="carousel-arrow carousel-previous"
+              type="button"
+              aria-label="Ver foto anterior"
+              (click)="changeDetailPhoto(-1)"
+            >
+              ‹
+            </button>
+            <button
+              class="carousel-arrow carousel-next"
+              type="button"
+              aria-label="Ver foto siguiente"
+              (click)="changeDetailPhoto(1)"
+            >
+              ›
+            </button>
+            <span class="carousel-count" aria-live="polite"
+              >{{ detailPhotoIndex() + 1 }} / {{ detailPhotos().length }}</span
+            >
             <div class="carousel-dots" aria-label="Elegir foto">
               @for (photo of detailPhotos(); track $index) {
-                <button type="button" [class.active]="detailPhotoIndex() === $index" [attr.aria-label]="'Ver foto ' + ($index + 1)" [attr.aria-current]="detailPhotoIndex() === $index ? 'true' : null" (click)="selectDetailPhoto($index)"></button>
+                <button
+                  type="button"
+                  [class.active]="detailPhotoIndex() === $index"
+                  [attr.aria-label]="'Ver foto ' + ($index + 1)"
+                  [attr.aria-current]="detailPhotoIndex() === $index ? 'true' : null"
+                  (click)="selectDetailPhoto($index)"
+                ></button>
               }
             </div>
           }
@@ -279,11 +364,7 @@
 }
 
 @if (accountDialog(); as mode) {
-  <div
-    class="dialog-backdrop"
-    (click)="closeAccount()"
-    (keydown.escape)="closeAccount()"
-  >
+  <div class="dialog-backdrop" (click)="closeAccount()" (keydown.escape)="closeAccount()">
     <section
       class="form-dialog"
       role="dialog"
@@ -291,12 +372,7 @@
       aria-labelledby="account-title"
       (click)="$event.stopPropagation()"
     >
-      <button
-        class="dialog-close"
-        type="button"
-        aria-label="Cerrar"
-        (click)="closeAccount()"
-      >
+      <button class="dialog-close" type="button" aria-label="Cerrar" (click)="closeAccount()">
         ×
       </button>
       <span class="section-kicker">B&amp;R NICARAGUA</span>
@@ -318,7 +394,14 @@
             required
         /></label>
         @if (mode === 'register') {
-          <label>Confirmar contraseña<input name="confirmPassword" type="password" autocomplete="new-password" minlength="6" required /></label>
+          <label
+            >Confirmar contraseña<input
+              name="confirmPassword"
+              type="password"
+              autocomplete="new-password"
+              minlength="6"
+              required
+          /></label>
         }
         @if (accountError()) {
           <p class="form-error" role="alert">{{ accountError() }}</p>
@@ -340,17 +423,43 @@
 }
 
 @if (profileDialog() && currentUser(); as user) {
-  <div class="dialog-backdrop" (click)="profileDialog.set(false)" (keydown.escape)="profileDialog.set(false)">
-    <section class="form-dialog" role="dialog" aria-modal="true" aria-labelledby="profile-title" (click)="$event.stopPropagation()">
-      <button class="dialog-close" type="button" aria-label="Cerrar" (click)="profileDialog.set(false)">×</button>
+  <div
+    class="dialog-backdrop"
+    (click)="profileDialog.set(false)"
+    (keydown.escape)="profileDialog.set(false)"
+  >
+    <section
+      class="form-dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="profile-title"
+      (click)="$event.stopPropagation()"
+    >
+      <button
+        class="dialog-close"
+        type="button"
+        aria-label="Cerrar"
+        (click)="profileDialog.set(false)"
+      >
+        ×
+      </button>
       <span class="section-kicker">TU CUENTA</span>
       <h2 id="profile-title">Editar perfil</h2>
       <form class="entry-form" (submit)="submitProfile($event)">
         <label>Nombre<input name="name" autocomplete="name" [value]="user.name" required /></label>
         <label>Correo<input type="email" [value]="user.email" disabled /></label>
-        <label>Foto de perfil<input type="file" accept="image/*" (change)="onPhotoSelected($event, 'profile')" /></label>
+        <label
+          >Foto de perfil<input
+            type="file"
+            accept="image/*"
+            (change)="onPhotoSelected($event, 'profile')"
+        /></label>
         @if (profilePhoto()) {
-          <img class="profile-preview" [src]="profilePhoto()" alt="Vista previa de tu foto de perfil" />
+          <img
+            class="profile-preview"
+            [src]="profilePhoto()"
+            alt="Vista previa de tu foto de perfil"
+          />
         }
         @if (profileError()) {
           <p class="form-error" role="alert">{{ profileError() }}</p>
@@ -364,20 +473,79 @@
 
 @if (publishDialog()) {
   <div class="dialog-backdrop" (click)="closePublish()" (keydown.escape)="closePublish()">
-    <section class="form-dialog" role="dialog" aria-modal="true" aria-labelledby="publish-title" (click)="$event.stopPropagation()">
-      <button class="dialog-close" type="button" aria-label="Cerrar" (click)="closePublish()">×</button>
+    <section
+      class="form-dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="publish-title"
+      (click)="$event.stopPropagation()"
+    >
+      <button class="dialog-close" type="button" aria-label="Cerrar" (click)="closePublish()">
+        ×
+      </button>
       <span class="section-kicker">PUBLICA EN NICARAGUA</span>
-      <h2 id="publish-title">{{ editingProperty() ? 'Editar publicación' : 'Publica tu propiedad' }}</h2>
+      <h2 id="publish-title">
+        {{ editingProperty() ? 'Editar publicación' : 'Publica tu propiedad' }}
+      </h2>
       <p>Comparte los datos principales para mostrar tu propiedad en esta página.</p>
       <form class="entry-form publish-form" (submit)="submitProperty($event)">
-        <label>Nombre de la propiedad<input name="title" [value]="editingProperty()?.title ?? ''" required /></label>
-        <label>Ciudad o zona<input name="location" placeholder="Managua, Granada, León, Rivas..." [value]="editingProperty()?.location ?? ''" required /></label>
-        <label>Tipo<select name="type" [value]="editingProperty()?.type ?? 'Casa'"><option>Casa</option><option>Apartamento</option><option>Terreno</option></select></label>
-        <label>Precio en USD<input name="price" type="number" min="1" [value]="editingProperty()?.price ?? ''" required /></label>
-        <label>Habitaciones<input name="bedrooms" type="number" min="0" [value]="editingProperty()?.bedrooms ?? 0" /></label>
-        <label>Baños<input name="bathrooms" type="number" min="0" [value]="editingProperty()?.bathrooms ?? 0" /></label>
-        <label>Área en m²<input name="area" type="number" min="0" [value]="editingProperty()?.area ?? 0" /></label>
-        <label>Fotos (hasta 8; puedes agregarlas en varias selecciones; máximo 8 MB cada una; ajuste automático hasta 1400 × 1400 px, proporción conservada)<input type="file" accept="image/*" multiple (change)="onPhotoSelected($event, 'property')" /></label>
+        <label
+          >Nombre de la propiedad<input
+            name="title"
+            [value]="editingProperty()?.title ?? ''"
+            required
+        /></label>
+        <label
+          >Ciudad o zona<input
+            name="location"
+            placeholder="Managua, Granada, León, Rivas..."
+            [value]="editingProperty()?.location ?? ''"
+            required
+        /></label>
+        <label
+          >Tipo<select name="type" [value]="editingProperty()?.type ?? 'Casa'">
+            <option>Casa</option>
+            <option>Apartamento</option>
+            <option>Terreno</option>
+          </select></label
+        >
+        <label
+          >Precio en USD<input
+            name="price"
+            type="number"
+            min="1"
+            [value]="editingProperty()?.price ?? ''"
+            required
+        /></label>
+        <label
+          >Habitaciones<input
+            name="bedrooms"
+            type="number"
+            min="0"
+            [value]="editingProperty()?.bedrooms ?? 0"
+        /></label>
+        <label
+          >Baños<input
+            name="bathrooms"
+            type="number"
+            min="0"
+            [value]="editingProperty()?.bathrooms ?? 0"
+        /></label>
+        <label
+          >Área en m²<input
+            name="area"
+            type="number"
+            min="0"
+            [value]="editingProperty()?.area ?? 0"
+        /></label>
+        <label
+          >Fotos (hasta 8; puedes agregarlas en varias selecciones; máximo 8 MB cada una; ajuste
+          automático hasta 1400 × 1400 px, proporción conservada)<input
+            type="file"
+            accept="image/*"
+            multiple
+            (change)="onPhotoSelected($event, 'property')"
+        /></label>
         @if (propertyPhotos().length) {
           <div class="property-previews full-field" aria-label="Vista previa de las fotos">
             @for (photo of propertyPhotos(); track photo) {
@@ -385,10 +553,22 @@
             }
           </div>
         } @else if (editingProperty()?.image) {
-          <img class="property-preview full-field" [src]="editingProperty()?.image" alt="Foto actual de la propiedad" />
+          <img
+            class="property-preview full-field"
+            [src]="editingProperty()?.image"
+            alt="Foto actual de la propiedad"
+          />
         }
-        <label class="full-field">Descripción<textarea name="description" rows="3" [value]="editingProperty()?.description ?? ''"></textarea></label>
-        <button class="contact-button full-field" type="submit">{{ editingProperty() ? 'Guardar cambios' : 'Publicar propiedad' }}</button>
+        <label class="full-field"
+          >Descripción<textarea
+            name="description"
+            rows="3"
+            [value]="editingProperty()?.description ?? ''"
+          ></textarea>
+        </label>
+        <button class="contact-button full-field" type="submit">
+          {{ editingProperty() ? 'Guardar cambios' : 'Publicar propiedad' }}
+        </button>
       </form>
       <small>Las publicaciones y las fotos se guardan en este navegador.</small>
     </section>
@@ -396,13 +576,27 @@
 }
 
 @if (deletePropertyId() !== null) {
-  <div class="dialog-backdrop" (click)="cancelDeleteProperty()" (keydown.escape)="cancelDeleteProperty()">
-    <section class="form-dialog confirm-dialog" role="alertdialog" aria-modal="true" aria-labelledby="delete-title" (click)="$event.stopPropagation()">
+  <div
+    class="dialog-backdrop"
+    (click)="cancelDeleteProperty()"
+    (keydown.escape)="cancelDeleteProperty()"
+  >
+    <section
+      class="form-dialog confirm-dialog"
+      role="alertdialog"
+      aria-modal="true"
+      aria-labelledby="delete-title"
+      (click)="$event.stopPropagation()"
+    >
       <h2 id="delete-title">¿Eliminar publicación?</h2>
       <p>Esta acción quitará tu publicación y no se puede deshacer.</p>
       <div class="confirm-actions">
-        <button type="button" class="secondary-button" (click)="cancelDeleteProperty()">Cancelar</button>
-        <button type="button" class="danger-button" (click)="confirmDeleteProperty()">Eliminar</button>
+        <button type="button" class="secondary-button" (click)="cancelDeleteProperty()">
+          Cancelar
+        </button>
+        <button type="button" class="danger-button" (click)="confirmDeleteProperty()">
+          Eliminar
+        </button>
       </div>
     </section>
   </div>

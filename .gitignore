@@ -13,6 +13,7 @@ yarn-error.log
 .env
 .env.*
 !.env.example
+/src/app/integrations/firebase/
 
 # IDEs and editors
 .idea/
@@ -45,3 +46,4 @@ __screenshots__/
 # System files
 .DS_Store
 Thumbs.db
+~$*.docx
