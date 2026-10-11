@@ -215,9 +215,7 @@
               <strong>{{ property.priceLabel }}</strong
               ><span>{{ property.type }}</span>
             </div>
-            @if (
-              currentUser() && property.ownerEmail && property.ownerEmail === currentUser()?.email
-            ) {
+            @if (currentUser() && property.ownerUid && property.ownerUid === currentUser()?.uid) {
               <div class="owner-actions">
                 <button type="button" (click)="openEditProperty(property)">Editar</button>
                 <button type="button" (click)="requestDeleteProperty(property)">Eliminar</button>
@@ -417,7 +415,9 @@
       >
         {{ mode === 'register' ? 'Ya tengo una cuenta' : 'Crear una cuenta' }}
       </button>
-      <small>Demo local: la cuenta solo queda guardada en este navegador.</small>
+      <small
+        >Tu cuenta se guarda en Firebase y puedes iniciar sesión desde otros dispositivos.</small
+      >
     </section>
   </div>
 }

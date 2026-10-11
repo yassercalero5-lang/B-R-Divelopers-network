@@ -1,5 +1,5 @@
 export interface Property {
-  id: number;
+  id: number | string;
   title: string;
   type: 'Casa' | 'Apartamento' | 'Terreno';
   location: string;
@@ -11,6 +11,7 @@ export interface Property {
   status: string;
   image: string;
   photos?: string[];
+  ownerUid?: string;
   ownerEmail?: string;
   imageAlt: string;
   description: string;

@@ -13,7 +13,6 @@ yarn-error.log
 .env
 .env.*
 !.env.example
-/src/app/integrations/firebase/
 
 # IDEs and editors
 .idea/

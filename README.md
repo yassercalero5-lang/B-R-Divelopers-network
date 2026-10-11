@@ -1,88 +1,75 @@
 # b&r|developers network
 
-Sitio web para explorar y publicar propiedades en Nicaragua. Esta guía describe la aplicación tal como está implementada y cómo ejecutarla localmente.
+Sitio web para explorar y publicar propiedades en Nicaragua, creado con Angular y TypeScript.
 
-## Ejecutar el proyecto
+## Ejecutar localmente
 
-Requisitos: Node.js y npm instalados.
+Requisitos: Node.js y npm.
 
 ```bash
 npm install
 npm start
 ```
 
-Abre `http://localhost:4200/`. Angular actualiza la aplicación al guardar los archivos.
-
-Para generar la compilación de producción:
+Abre `http://localhost:4200/`. Para compilar la aplicación:
 
 ```bash
 npm run build
 ```
 
-## Funciones disponibles
+## Funciones
 
-- Catálogo inicial de seis propiedades de ejemplo.
-- Búsqueda por título, ubicación o tipo; filtros por tipo y precio máximo.
-- Ficha de cada inmueble con galería deslizable, flechas, contador y selección directa de fotos.
-- Registro e inicio de sesión locales, perfil editable y gestión de publicaciones propias.
-- Hasta ocho fotos por propiedad, máximo 8 MB por archivo. Las imágenes se reducen a un máximo de 1400 × 1400 px, mantienen su proporción y se convierten a JPEG.
-- Contacto por correo mediante un enlace `mailto:`.
+- Catálogo, búsqueda por título/ubicación/tipo, filtros por tipo y precio.
+- Ficha de inmueble con galería de hasta ocho fotos.
+- Reducción de imágenes a un máximo de 1400 × 1400 píxeles para propiedades.
+- Registro e inicio de sesión con correo y contraseña mediante Firebase Authentication.
+- Publicación, edición y eliminación de anuncios propios en Cloud Firestore.
+- Carga de fotos y avatares a Cloud Storage for Firebase.
+- Sincronización en tiempo real del catálogo entre dispositivos.
+- Migración al iniciar sesión de publicaciones del `localStorage` de ese navegador que pertenecen al mismo correo.
+- Contacto por correo mediante `mailto:`.
 
-## Organización del código
+## Tecnologías y organización
 
-```text
-src/
-  app/
-    app.ts                         Estado y acciones de la interfaz
-    app.html                       Estructura de la página y diálogos
-    app.css                        Estilos de la aplicación
-    data/sample-properties.ts      Anuncios de ejemplo
-    models/                        Tipos Property y LocalAccount
-    integrations/firebase/         Preparación local, todavía no conectada
-    app.config.ts                  Proveedores del navegador y rutas
-    app.config.server.ts           Configuración de renderizado del servidor
-    app.routes.ts                  Rutas del navegador
-    app.routes.server.ts           Reglas de prerenderizado
-  main.ts                          Inicio de Angular en el navegador
-  main.server.ts                   Inicio de Angular en el servidor
-  server.ts                        Adaptador HTTP para Angular SSR
-  styles.css                       Estilos globales
-public/                            Recursos estáticos
-```
+- Angular 22, TypeScript, plantillas Angular y CSS adaptable.
+- Signals (`signal`, `computed`) para estado y filtros reactivos.
+- `src/app/app.ts`, `app.html` y `app.css`: lógica, plantilla y estilos del componente principal.
+- `src/app/data/sample-properties.ts`: anuncios de muestra.
+- `src/app/models/`: tipos de propiedad y usuario autenticado.
+- `src/app/integrations/firebase/`: inicialización de Firebase, autenticación, Firestore y Storage.
+- `firestore.rules` y `storage.rules`: reglas de acceso por propietario.
+- `firebase.json` y `.firebaserc`: recursos Firebase y proyecto configurados para la CLI.
+- `.github/workflows/deploy-pages.yml`: compilación y despliegue automatizado a GitHub Pages.
 
-### Tecnologías y por qué se usan
+## Preparar Firebase
 
-- **Angular 22** organiza la interfaz como una aplicación web y actualiza las vistas al cambiar el estado.
-- **TypeScript** define los datos de propiedades y cuentas y detecta errores de tipos durante la compilación.
-- **Signals (`signal` y `computed`)** mantienen estados como filtros, sesión, galería y anuncios; los valores derivados se recalculan cuando cambian sus dependencias.
-- **HTML y control de flujo de Angular (`@if`, `@for`)** describen el contenido y muestran diálogos o listas según el estado.
-- **CSS** define el diseño adaptable a pantallas móviles y de escritorio.
-- **Canvas y `createImageBitmap`** reducen las fotografías seleccionadas y las convierten a JPEG para limitar su tamaño.
-- **`localStorage`** conserva cuentas y anuncios creados en el navegador actual.
-- **Angular SSR y prerenderizado** permiten generar la página durante la compilación; el flujo de GitHub Pages publica los archivos estáticos.
-- **GitHub Actions y GitHub Pages** compilan y publican el sitio cuando se envían cambios a la rama `main`.
+La aplicación está preparada para el proyecto `byr-developer-network`. Para activar los servicios en Firebase:
 
-## Datos y limitaciones
+1. En Firebase Console, habilita **Authentication → Email/Password**.
+2. En **Authentication → Settings → Authorized domains**, agrega `yassercalero5-lang.github.io` y `localhost`.
+3. Confirma que existe la base predeterminada de Cloud Firestore.
+4. Para sincronizar las fotos, configura el bucket de Cloud Storage. La carga de archivos de Cloud Storage requiere el plan Blaze de pago por uso; no lo actives sin revisar la facturación del proyecto.
+5. Desde una terminal autenticada con acceso al proyecto, instala/usa Firebase CLI y despliega las reglas:
 
-Las cuentas y publicaciones del prototipo se guardan en `localStorage`; no existe sincronización entre dispositivos ni autenticación en un servidor. Por eso el acceso y la propiedad de anuncios son controles de demostración del lado del cliente, no un sistema seguro para una operación inmobiliaria real. Los favoritos solo duran mientras permanece abierta la sesión de la página.
+   ```bash
+   npx firebase-tools login
+   npx firebase-tools deploy --only firestore:rules,storage
+   ```
 
-La carpeta local `src/app/integrations/firebase/` conserva archivos de preparación y está excluida de Git mientras Firebase no se integre. La aplicación no la importa ni guarda datos en Firebase; los servicios están pendientes de implementación. El inicio con Google tampoco está conectado.
+Las reglas permiten leer anuncios públicos, pero solo un usuario autenticado puede crear, actualizar o borrar los suyos. El código de la página no puede publicar estas reglas por sí solo; el comando necesita que el propietario inicie sesión en Firebase CLI.
 
-## Publicación
+Las claves de configuración de Firebase para una aplicación web identifican el proyecto; la protección de datos se realiza con Authentication y reglas. No pongas credenciales de administrador en el navegador.
 
-El workflow de `.github/workflows/deploy-pages.yml` ejecuta `npm ci`, compila para la ruta del repositorio y publica `dist/prueba/browser` en GitHub Pages. La dirección pública es:
+### Datos previos
 
-<https://yassercalero5-lang.github.io/B-R-Divelopers-network/>
+Las cuentas locales antiguas no se convierten en cuentas Firebase. Cada persona debe crear una cuenta Firebase con correo y contraseña. Al iniciar sesión con el mismo correo que usó en este navegador, la aplicación intenta migrar sus anuncios y fotos locales a Firestore y Storage. Los datos locales de otros dispositivos no son accesibles desde este navegador.
 
-Para publicar cambios: guarda los archivos, crea un commit y envíalo a `main` (por ejemplo, desde **Control de código fuente** en VS Code). Luego revisa la pestaña **Actions** del repositorio para ver el estado del despliegue.
+## Publicar el sitio
 
-## Guion breve para la exposición
+El workflow de GitHub Actions ejecuta `npm ci`, compila con la ruta base del repositorio y publica `dist/prueba/browser` a GitHub Pages cuando hay un push a `main`.
 
-La guía completa de exposición está en [`docs/guia_exposicion_b_r_developers_network.docx`](docs/guia_exposicion_b_r_developers_network.docx).
+Sitio: <https://yassercalero5-lang.github.io/B-R-Divelopers-network/>
 
-1. Explica el objetivo: ayudar a explorar propiedades y facilitar la publicación de anuncios.
-2. Presenta `app.html`, `app.css` y `app.ts`: estructura, diseño y lógica de la pantalla.
-3. Muestra los tipos de datos y los anuncios de muestra separados en `models/` y `data/`.
-4. Demuestra búsqueda, filtros, cuenta local, gestión de anuncios y galería de hasta ocho fotos.
-5. Explica que las fotos se redimensionan, y que los datos persisten solo en el navegador.
-6. Cierra con la publicación automática en GitHub Pages y las limitaciones pendientes de Firebase.
+Para subir cambios desde VS Code: guarda los archivos, crea un commit y haz push a `main`. Luego revisa **Actions** en GitHub.
+
+Guía de exposición actualizada: [`docs/guia_exposicion_firebase.docx`](docs/guia_exposicion_firebase.docx).

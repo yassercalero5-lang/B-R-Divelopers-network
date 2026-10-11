@@ -2,8 +2,10 @@ import { isPlatformBrowser, NgOptimizedImage } from '@angular/common';
 import { afterNextRender, Component, computed, inject, PLATFORM_ID, signal } from '@angular/core';
 
 import { SAMPLE_PROPERTIES } from './data/sample-properties';
-import type { LocalAccount } from './models/local-account.model';
+import type { FirebaseUser } from './models/firebase-user.model';
 import type { Property } from './models/property.model';
+import { FirebaseAuthService } from './integrations/firebase/auth.service';
+import { PropiedadesService } from './integrations/firebase/propiedades.service';
 
 const PROPERTY_PHOTO_MAX_DIMENSION = 1400;
 const PROFILE_PHOTO_MAX_DIMENSION = 480;
@@ -16,11 +18,13 @@ const PROFILE_PHOTO_MAX_DIMENSION = 480;
 })
 export class App {
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+  private readonly firebaseAuth = inject(FirebaseAuthService);
+  private readonly propiedadesService = inject(PropiedadesService);
   protected readonly query = signal('');
   protected readonly selectedType = signal('Todas');
   protected readonly myPropertiesOnly = signal(false);
   protected readonly maxPrice = signal(0);
-  protected readonly favorites = signal<number[]>([]);
+  protected readonly favorites = signal<Array<number | string>>([]);
   protected readonly selectedProperty = signal<Property | null>(null);
   protected readonly detailPhotoIndex = signal(0);
   protected readonly detailPhotos = computed(() => {
@@ -30,9 +34,7 @@ export class App {
   protected readonly notice = signal('');
   protected readonly accountDialog = signal<'login' | 'register' | null>(null);
   protected readonly accountError = signal('');
-  protected readonly currentUser = signal<Pick<LocalAccount, 'name' | 'email' | 'avatar'> | null>(
-    null,
-  );
+  protected readonly currentUser = signal<FirebaseUser | null>(null);
   protected readonly publishAfterAccount = signal(false);
   protected readonly publishDialog = signal(false);
   protected readonly profileDialog = signal(false);
@@ -40,10 +42,9 @@ export class App {
   protected readonly profilePhoto = signal('');
   protected readonly propertyPhoto = signal('');
   protected readonly propertyPhotos = signal<string[]>([]);
-  protected readonly editingPropertyId = signal<number | null>(null);
-  protected readonly deletePropertyId = signal<number | null>(null);
+  protected readonly deletePropertyId = signal<number | string | null>(null);
   protected readonly ownedProperties = computed(() =>
-    this.properties().filter((property) => property.ownerEmail === this.currentUser()?.email),
+    this.properties().filter((property) => property.ownerUid === this.currentUser()?.uid),
   );
   protected readonly properties = signal<Property[]>(SAMPLE_PROPERTIES);
   private readonly searchableProperties = computed(() =>
@@ -53,30 +54,33 @@ export class App {
     })),
   );
 
+  protected readonly editingPropertyId = signal<number | string | null>(null);
   protected readonly editingProperty = computed(
     () => this.properties().find((property) => property.id === this.editingPropertyId()) ?? null,
   );
 
   constructor() {
-    afterNextRender(() => this.loadBrowserData());
+    afterNextRender(() => {
+      if (!this.isBrowser) return;
+      this.propiedadesService.watchProperties(
+        (cloudProperties) => this.properties.set([...cloudProperties, ...SAMPLE_PROPERTIES]),
+        () =>
+          this.showNotice('No se pudieron cargar anuncios de Firebase. Revisa la configuración.'),
+      );
+      this.firebaseAuth.watch((user) => {
+        this.currentUser.set(user);
+        if (user) void this.migrateLocalProperties(user);
+      });
+    });
   }
 
-  private loadBrowserData(): void {
-    if (!this.isBrowser) return;
+  private async migrateLocalProperties(user: FirebaseUser): Promise<void> {
     try {
-      const savedProperties = localStorage.getItem('br-nicaragua-properties');
-      if (savedProperties) {
-        const customProperties: Property[] = JSON.parse(savedProperties);
-        if (Array.isArray(customProperties))
-          this.properties.update((items) => [...customProperties, ...items]);
-      }
-      const accounts = this.readAccounts();
-      const sessionEmail = localStorage.getItem('br-nicaragua-session');
-      const account = accounts.find((item) => item.email === sessionEmail);
-      if (account)
-        this.currentUser.set({ name: account.name, email: account.email, avatar: account.avatar });
+      const count = await this.propiedadesService.migrateLocalProperties(user);
+      if (count)
+        this.showNotice(`Se sincronizaron ${count} anuncios guardados en este dispositivo.`);
     } catch {
-      this.showNotice('No se pudieron recuperar los datos guardados en este navegador.');
+      this.showNotice('Iniciaste sesión, pero no se pudieron sincronizar los anuncios locales.');
     }
   }
 
@@ -84,7 +88,7 @@ export class App {
     const term = this.query().trim().toLocaleLowerCase();
     const selectedType = this.selectedType();
     const maxPrice = this.maxPrice();
-    const ownerEmail = this.currentUser()?.email;
+    const ownerUid = this.currentUser()?.uid;
     const myPropertiesOnly = this.myPropertiesOnly();
 
     return this.searchableProperties()
@@ -92,8 +96,7 @@ export class App {
         const matchesQuery = !term || searchText.includes(term);
         const matchesType = selectedType === 'Todas' || property.type === selectedType;
         const matchesPrice = maxPrice === 0 || property.price <= maxPrice;
-        const matchesOwner =
-          !myPropertiesOnly || (!!ownerEmail && property.ownerEmail === ownerEmail);
+        const matchesOwner = !myPropertiesOnly || (!!ownerUid && property.ownerUid === ownerUid);
         return matchesQuery && matchesType && matchesPrice && matchesOwner;
       })
       .map(({ property }) => property);
@@ -118,7 +121,7 @@ export class App {
     document.getElementById('propiedades')?.scrollIntoView({ behavior: 'smooth' });
   }
 
-  protected toggleFavorite(id: number): void {
+  protected toggleFavorite(id: number | string): void {
     this.favorites.update((current) =>
       current.includes(id) ? current.filter((favorite) => favorite !== id) : [...current, id],
     );
@@ -177,39 +180,19 @@ export class App {
     this.accountError.set('');
 
     try {
-      const accounts = this.readAccounts();
-      const account = accounts.find((item) => item.email === email);
-
       if (this.accountDialog() === 'register') {
         const confirmation = String(data.get('confirmPassword') ?? '');
         if (password !== confirmation) {
           this.accountError.set('Las contraseñas no coinciden.');
           return;
         }
-        if (account?.passwordHash) {
-          this.accountError.set('Ya existe una cuenta con este correo. Inicia sesión.');
-          return;
-        }
-        const newAccount: LocalAccount = {
-          name,
-          email,
-          passwordHash: await this.hashPassword(password),
-        };
-        this.saveAccounts([...accounts.filter((item) => item.email !== email), newAccount]);
-        localStorage.setItem('br-nicaragua-session', email);
-        this.currentUser.set({ name, email });
-        this.showNotice(`¡Cuenta creada, ${name}!`);
+        const user = await this.firebaseAuth.register(name, email, password);
+        this.currentUser.set(user);
+        this.showNotice(`¡Cuenta creada, ${name}! Tus datos ya se guardan en Firebase.`);
       } else {
-        const passwordHash = await this.hashPassword(password);
-        if (!account || !account.passwordHash || account.passwordHash !== passwordHash) {
-          this.accountError.set(
-            'Correo o contraseña incorrectos. Revisa tus datos o crea una cuenta.',
-          );
-          return;
-        }
-        localStorage.setItem('br-nicaragua-session', email);
-        this.currentUser.set({ name: account.name, email: account.email });
-        this.showNotice('Sesión iniciada. ¡Qué bueno tenerte de vuelta!');
+        const user = await this.firebaseAuth.login(email, password);
+        this.currentUser.set(user);
+        this.showNotice('Sesión iniciada. Tus propiedades se sincronizan con Firebase.');
       }
 
       const shouldPublish = this.publishAfterAccount();
@@ -217,8 +200,8 @@ export class App {
       this.accountDialog.set(null);
       form.reset();
       if (shouldPublish) this.publishDialog.set(true);
-    } catch {
-      this.accountError.set('No se pudo guardar la cuenta en este navegador.');
+    } catch (error) {
+      this.accountError.set(this.getFirebaseError(error));
     }
   }
 
@@ -233,12 +216,17 @@ export class App {
     this.publishAfterAccount.set(false);
   }
 
-  private async hashPassword(password: string): Promise<string> {
-    const bytes = new TextEncoder().encode(password);
-    const digest = await crypto.subtle.digest('SHA-256', bytes);
-    return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join(
-      '',
-    );
+  private getFirebaseError(error: unknown): string {
+    const code =
+      typeof error === 'object' && error !== null && 'code' in error ? String(error.code) : '';
+    if (code === 'auth/email-already-in-use') return 'Ese correo ya tiene cuenta. Inicia sesión.';
+    if (code === 'auth/invalid-credential' || code === 'auth/user-not-found')
+      return 'Correo o contraseña incorrectos.';
+    if (code === 'auth/weak-password') return 'La contraseña debe tener al menos 6 caracteres.';
+    if (code === 'auth/invalid-email') return 'Escribe un correo válido.';
+    if (code === 'permission-denied')
+      return 'Firebase rechazó la operación. Revisa las reglas de Firestore y Storage.';
+    return 'No se pudo conectar con Firebase. Revisa la configuración del proyecto.';
   }
   protected async submitProperty(event: SubmitEvent): Promise<void> {
     event.preventDefault();
@@ -258,7 +246,7 @@ export class App {
     if (!title || !location || !Number.isFinite(price) || price < 1) return;
     const type = String(data.get('type') ?? 'Casa') as Property['type'];
     const existing = this.editingProperty();
-    if (existing && existing.ownerEmail !== user.email) {
+    if (existing && existing.ownerUid !== user.uid) {
       this.closePublish();
       return;
     }
@@ -283,21 +271,26 @@ export class App {
       description:
         String(data.get('description') ?? '').trim() ||
         `Propiedad disponible en ${location}, Nicaragua.`,
+      ownerUid: user.uid,
       ownerEmail: user.email,
     };
-    if (existing) {
-      this.properties.update((items) =>
-        items.map((item) => (item.id === existing.id ? property : item)),
-      );
-      this.showNotice('Tu publicación se actualizó.');
-    } else {
-      this.properties.update((items) => [property, ...items]);
-      this.showNotice('Tu propiedad se publicó correctamente.');
+    try {
+      const saved = await this.propiedadesService.saveProperty(property, user);
+      if (existing) {
+        this.properties.update((items) =>
+          items.map((item) => (item.id === existing.id ? saved : item)),
+        );
+        this.showNotice('Tu publicación se actualizó y sincronizó.');
+      } else {
+        this.properties.update((items) => [saved, ...items]);
+        this.showNotice('Tu propiedad se publicó y sincronizó.');
+      }
+      this.closePublish();
+      form.reset();
+      document.getElementById('propiedades')?.scrollIntoView({ behavior: 'smooth' });
+    } catch (error) {
+      this.showNotice(this.getFirebaseError(error));
     }
-    this.persistProperties();
-    this.closePublish();
-    form.reset();
-    document.getElementById('propiedades')?.scrollIntoView({ behavior: 'smooth' });
   }
 
   protected openEditProperty(property: Property): void {
@@ -328,14 +321,14 @@ export class App {
       this.openAccount('login');
       return false;
     }
-    if (property.ownerEmail !== user.email) {
+    if (property.ownerUid !== user.uid) {
       this.showNotice('Solo puedes administrar anuncios publicados con tu cuenta.');
       return false;
     }
     return true;
   }
 
-  protected confirmDeleteProperty(): void {
+  protected async confirmDeleteProperty(): Promise<void> {
     const id = this.deletePropertyId();
     const user = this.currentUser();
     const property = this.properties().find((item) => item.id === id);
@@ -346,15 +339,20 @@ export class App {
       this.openAccount('login');
       return;
     }
-    if (property.ownerEmail !== user.email) {
+    if (property.ownerUid !== user.uid) {
       this.deletePropertyId.set(null);
       this.showNotice('Solo puedes eliminar anuncios publicados con tu cuenta.');
       return;
     }
-    this.properties.update((items) => items.filter((item) => item.id !== id));
-    this.persistProperties();
-    this.deletePropertyId.set(null);
-    this.showNotice('La publicación se eliminó.');
+    if (typeof id !== 'string') return;
+    try {
+      await this.propiedadesService.deleteProperty(property);
+      this.properties.update((items) => items.filter((item) => item.id !== id));
+      this.deletePropertyId.set(null);
+      this.showNotice('La publicación se eliminó de Firebase.');
+    } catch (error) {
+      this.showNotice(this.getFirebaseError(error));
+    }
   }
 
   protected cancelDeleteProperty(): void {
@@ -375,24 +373,28 @@ export class App {
     const name = String(new FormData(form).get('name') ?? '').trim();
     if (!name) return;
     try {
-      const accounts = this.readAccounts();
-      const account = accounts.find((item) => item.email === current.email);
-      if (!account) throw new Error('Account not found');
-      const updated = { ...account, name, avatar: this.profilePhoto() || undefined };
-      this.saveAccounts(accounts.map((item) => (item.email === current.email ? updated : item)));
-      this.currentUser.set({ name, email: current.email, avatar: updated.avatar });
+      let avatar = this.profilePhoto() || undefined;
+      if (avatar?.startsWith('data:image/')) {
+        avatar = await this.propiedadesService.uploadAvatar(current, avatar);
+      }
+      const updated = await this.firebaseAuth.updateCurrentUser(name, avatar);
+      this.currentUser.set(updated);
       this.profileDialog.set(false);
       this.showNotice('Tu perfil se actualizó.');
-    } catch {
-      this.profileError.set('No se pudo guardar tu perfil.');
+    } catch (error) {
+      this.profileError.set(this.getFirebaseError(error));
     }
   }
 
-  protected logout(): void {
-    if (this.isBrowser) localStorage.removeItem('br-nicaragua-session');
-    this.currentUser.set(null);
+  protected async logout(): Promise<void> {
     this.myPropertiesOnly.set(false);
-    this.showNotice('Has cerrado sesión.');
+    try {
+      await this.firebaseAuth.logout();
+      this.currentUser.set(null);
+      this.showNotice('Has cerrado sesión.');
+    } catch (error) {
+      this.showNotice(this.getFirebaseError(error));
+    }
   }
 
   protected async onPhotoSelected(event: Event, target: 'profile' | 'property'): Promise<void> {
@@ -456,28 +458,6 @@ export class App {
     return image.startsWith('data:image/');
   }
 
-  private readAccounts(): LocalAccount[] {
-    const savedAccounts = localStorage.getItem('br-nicaragua-accounts');
-    if (savedAccounts) {
-      const parsed: unknown = JSON.parse(savedAccounts);
-      return Array.isArray(parsed) ? (parsed as LocalAccount[]) : [];
-    }
-    const legacy = localStorage.getItem('br-nicaragua-account');
-    if (!legacy) return [];
-    const account = JSON.parse(legacy) as Partial<LocalAccount>;
-    return account.email && account.name
-      ? [{ name: account.name, email: account.email, passwordHash: account.passwordHash ?? '' }]
-      : [];
-  }
-
-  private saveAccounts(accounts: LocalAccount[]): void {
-    localStorage.setItem('br-nicaragua-accounts', JSON.stringify(accounts));
-  }
-
-  private persistProperties(): void {
-    const ownProperties = this.properties().filter((property) => property.ownerEmail);
-    localStorage.setItem('br-nicaragua-properties', JSON.stringify(ownProperties));
-  }
   protected contactLink(property: Property): string {
     return `mailto:hola@brdevelopers.network?subject=${encodeURIComponent(`Me interesa ${property.title}`)}`;
   }
