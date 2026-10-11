@@ -46,6 +46,12 @@ export class App {
     this.properties().filter((property) => property.ownerEmail === this.currentUser()?.email),
   );
   protected readonly properties = signal<Property[]>(SAMPLE_PROPERTIES);
+  private readonly searchableProperties = computed(() =>
+    this.properties().map((property) => ({
+      property,
+      searchText: `${property.title} ${property.location} ${property.type}`.toLocaleLowerCase(),
+    })),
+  );
 
   protected readonly editingProperty = computed(
     () => this.properties().find((property) => property.id === this.editingPropertyId()) ?? null,
@@ -76,18 +82,21 @@ export class App {
 
   protected readonly filteredProperties = computed(() => {
     const term = this.query().trim().toLocaleLowerCase();
-    return this.properties().filter((property) => {
-      const matchesQuery =
-        !term ||
-        `${property.title} ${property.location} ${property.type}`
-          .toLocaleLowerCase()
-          .includes(term);
-      const matchesType = this.selectedType() === 'Todas' || property.type === this.selectedType();
-      const matchesPrice = this.maxPrice() === 0 || property.price <= this.maxPrice();
-      const matchesOwner =
-        !this.myPropertiesOnly() || property.ownerEmail === this.currentUser()?.email;
-      return matchesQuery && matchesType && matchesPrice && matchesOwner;
-    });
+    const selectedType = this.selectedType();
+    const maxPrice = this.maxPrice();
+    const ownerEmail = this.currentUser()?.email;
+    const myPropertiesOnly = this.myPropertiesOnly();
+
+    return this.searchableProperties()
+      .filter(({ property, searchText }) => {
+        const matchesQuery = !term || searchText.includes(term);
+        const matchesType = selectedType === 'Todas' || property.type === selectedType;
+        const matchesPrice = maxPrice === 0 || property.price <= maxPrice;
+        const matchesOwner =
+          !myPropertiesOnly || (!!ownerEmail && property.ownerEmail === ownerEmail);
+        return matchesQuery && matchesType && matchesPrice && matchesOwner;
+      })
+      .map(({ property }) => property);
   });
 
   protected applySearch(): void {
